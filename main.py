@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
 import yfinance as yf
+import matplotlib.pyplot as plt
 
 START_DATE = "2010-01-01"
 TICKERS = ["AAPL", "SPY"]
@@ -31,6 +31,4 @@ def plot_rebased(rebased):
 if __name__ == "__main__":
     df = load_data()
     rebased = rebase(df)
-    print(rebased.head())
-    print(rebased.tail())
     plot_rebased(rebased)

@@ -18,23 +18,39 @@ UNIVERSE = [
 ]
 
 
+def fit_beta(log_y, log_x):
+    """Fixed-beta OLS fit of log(y) on log(x) (Engle-Granger step 1)."""
+    beta, alpha, r_value, _, _ = stats.linregress(log_x, log_y)
+    return alpha, beta, r_value ** 2
+
+
+def spread_from_beta(log_y, log_x, alpha, beta):
+    return (log_y - (alpha + beta * log_x)).dropna()
+
+
+def run_adf(spread):
+    """Augmented Dickey-Fuller test. H0 = unit root (not mean-reverting);
+    reject H0 (small p-value) => evidence the spread is stationary."""
+    stat, pvalue, _, nobs, _, _ = adfuller(spread.dropna(), autolag="AIC")
+    return stat, pvalue, nobs
+
+
 def cointegration_stats(prices, y_col, x_col):
-    """Fixed-beta OLS + ADF test for one pair (see ols_analysis.static_ols
-    and ols_analysis.adf_test). Returns the numbers needed to rank pairs."""
+    """Fixed-beta OLS + ADF test for one pair, fit and tested on the same
+    (full) sample. Returns the numbers needed to rank pairs."""
     log_y = np.log(prices[y_col])
     log_x = np.log(prices[x_col])
 
-    beta, alpha, r_value, _, _ = stats.linregress(log_x, log_y)
-    spread = (log_y - (alpha + beta * log_x)).dropna()
-
-    stat, pvalue, _, _, _, _ = adfuller(spread, autolag="AIC")
+    alpha, beta, r2 = fit_beta(log_y, log_x)
+    spread = spread_from_beta(log_y, log_x, alpha, beta)
+    stat, pvalue, _ = run_adf(spread)
     return_corr = log_y.diff().corr(log_x.diff())
 
     return {
         "y": y_col,
         "x": x_col,
         "beta": beta,
-        "r2": r_value ** 2,
+        "r2": r2,
         "return_corr": return_corr,
         "adf_stat": stat,
         "adf_pvalue": pvalue,

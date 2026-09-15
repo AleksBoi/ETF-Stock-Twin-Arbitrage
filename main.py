@@ -1,7 +1,7 @@
 import yfinance as yf
 import matplotlib.pyplot as plt
 
-START_DATE = "2010-01-01"
+START_DATE = "2020-01-01"
 TICKERS = ["AAPL", "SPY"]
 
 

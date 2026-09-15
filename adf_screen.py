@@ -35,6 +35,22 @@ def run_adf(spread):
     return stat, pvalue, nobs
 
 
+def half_life(spread):
+    """Mean-reversion half-life from an AR(1) fit: spread_t = a + b*spread_{t-1}.
+    half_life = -ln(2)/ln(b), in units of the spread's own sampling frequency.
+    Only meaningful when 0 < b < 1 (i.e. actually mean-reverting); a
+    slow/negative or explosive b returns None instead of a bogus number."""
+    spread = spread.dropna()
+    lagged = spread.shift(1).dropna()
+    current = spread.loc[lagged.index]
+
+    b, _, _, _, _ = stats.linregress(lagged, current)
+    if not (0 < b < 1):
+        return None, b
+
+    return -np.log(2) / np.log(b), b
+
+
 def cointegration_stats(prices, y_col, x_col):
     """Fixed-beta OLS + ADF test for one pair, fit and tested on the same
     (full) sample. Returns the numbers needed to rank pairs."""
